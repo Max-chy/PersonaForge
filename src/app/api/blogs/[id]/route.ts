@@ -1,14 +1,21 @@
+// src/app/api/blogs/[id]/route.ts
+
 import { connectDB } from "../../../../../lib/db";
 import Blog from "../../../../../lib/models/Blog";
 import { NextRequest, NextResponse } from "next/server";
 
-// Handle GET request to fetch a blog by ID
+// GET method to fetch a blog by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params; // Extract the blog ID from the route params
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
+    const { id } = await params; // Await the params Promise
+
+    if (!id) {
+      return NextResponse.json({ message: "ID is required." }, { status: 400 });
+    }
+
     await connectDB();
     const blog = await Blog.findById(id);
     if (!blog) {
@@ -16,6 +23,7 @@ export async function GET(
     }
     return NextResponse.json(blog, { status: 200 });
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { message: "Failed to fetch blog." },
       { status: 500 }
@@ -23,21 +31,26 @@ export async function GET(
   }
 }
 
-// Handle PUT request to update a blog by ID
+// PUT method to update a blog by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
+    const { id } = await params; // Await the params Promise
+
+    if (!id) {
+      return NextResponse.json({ message: "ID is required." }, { status: 400 });
+    }
+
     await connectDB();
-    const body = await request.json(); // Parse the JSON request body
+    const body = await request.json();
     const { title, content } = body;
 
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
       { title, content },
-      { new: true } // Return the updated blog
+      { new: true }
     );
 
     if (!updatedBlog) {
@@ -45,6 +58,7 @@ export async function PUT(
     }
     return NextResponse.json(updatedBlog, { status: 200 });
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { message: "Failed to update blog." },
       { status: 500 }
@@ -52,13 +66,18 @@ export async function PUT(
   }
 }
 
-// Handle DELETE request to delete a blog by ID
+// DELETE method to delete a blog by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
+    const { id } = await params; // Await the params Promise
+
+    if (!id) {
+      return NextResponse.json({ message: "ID is required." }, { status: 400 });
+    }
+
     await connectDB();
     const deletedBlog = await Blog.findByIdAndDelete(id);
     if (!deletedBlog) {
@@ -69,6 +88,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { message: "Failed to delete blog." },
       { status: 500 }
